@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
-API_URL = os.getenv('API_URL', '')
+API_URL = os.getenv('API_URL', "https://cool.testing.dlc.ntu.edu.tw/api/v1/accounts/{account_id}/features?hide_inherited_enabled=true&per_page=50&page={page}")
+ACCOUNT_ID = os.getenv('ACCOUNT_ID', '')
 CSV_DIR = os.path.join(os.path.dirname(__file__), 'csv')
 
 app = Flask(__name__)
@@ -26,8 +27,9 @@ def fetch_all_feature_options():
         'Pragma': 'no-cache',
         'Connection': 'keep-alive',
     }
+    url = API_URL.replace('{account_id}', ACCOUNT_ID)
     while True:
-        resp = requests.get(API_URL.format(page=page), headers=HEADERS)
+        resp = requests.get(url.format(page=page), headers=HEADERS)
         print(f"[DEBUG] Fetching page {page}, status: {resp.status_code}")
         if resp.status_code != 200:
             print(f"[DEBUG] Response: {resp.text}")
@@ -50,6 +52,7 @@ def transform_features(features):
     for f in features:
         fo = f.get('feature_flag', {})
         rows.append({
+            'Account ID': ACCOUNT_ID,
             'Feature Name': f.get('display_name', ''),
             'Feature Description': f.get('description', ''),
             'Hidden': checkmark(fo.get('hidden', False)),
@@ -72,9 +75,13 @@ def fetch_features():
     filename = f"{timestamp}_feature_option_list.csv"
     filepath = os.path.join(CSV_DIR, filename)
     with open(filepath, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        f.write(f"# Account ID: {ACCOUNT_ID}\n")
+        writer = csv.DictWriter(f, fieldnames=[k for k in rows[0].keys() if k != 'Account ID'])
         writer.writeheader()
-        writer.writerows(rows)
+        for row in rows:
+            row = dict(row)
+            row.pop('Account ID', None)
+            writer.writerow(row)
     return jsonify({'filename': filename})
 
 # Endpoint to list CSV files
