@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # Helper to fetch all feature options
 
-def fetch_all_feature_options():
+def fetch_all_feature_options(account_id):
     all_features = []
     page = 1
     HEADERS = {
@@ -27,7 +27,7 @@ def fetch_all_feature_options():
         'Pragma': 'no-cache',
         'Connection': 'keep-alive',
     }
-    url = API_URL.replace('{account_id}', ACCOUNT_ID)
+    url = API_URL.replace('{account_id}', account_id)
     while True:
         resp = requests.get(url.format(page=page), headers=HEADERS)
         print(f"[DEBUG] Fetching page {page}, status: {resp.status_code}")
@@ -45,14 +45,14 @@ def fetch_all_feature_options():
 
 # Helper to transform feature options
 
-def transform_features(features):
+def transform_features(features, account_id):
     def checkmark(val):
         return '✅' if str(val).lower() == 'true' else ''
     rows = []
     for f in features:
         fo = f.get('feature_flag', {})
         rows.append({
-            'Account ID': ACCOUNT_ID,
+            'Account ID': account_id,
             'Feature Name': f.get('display_name', ''),
             'Feature Description': f.get('description', ''),
             'Hidden': checkmark(fo.get('hidden', False)),
@@ -67,22 +67,30 @@ def transform_features(features):
 # Endpoint to fetch and save feature options
 @app.route('/fetch_features', methods=['POST'])
 def fetch_features():
-    features = fetch_all_feature_options()
-    rows = transform_features(features)
+    # 從 POST body 獲取 account_id，如果沒有則使用環境變數
+    data = request.get_json() or {}
+    account_id = data.get('account_id', ACCOUNT_ID)
+    
+    if not account_id:
+        return jsonify({'error': 'Account ID is required.'}), 400
+    
+    print(f"[DEBUG] Fetching features for Account ID: {account_id}")
+    features = fetch_all_feature_options(account_id)
+    rows = transform_features(features, account_id)
     if not rows:
         return jsonify({'error': 'No feature options found.'}), 204
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{timestamp}_feature_option_list.csv"
     filepath = os.path.join(CSV_DIR, filename)
     with open(filepath, 'w', newline='', encoding='utf-8') as f:
-        f.write(f"# Account ID: {ACCOUNT_ID}\n")
+        f.write(f"# Account ID: {account_id}\n")
         writer = csv.DictWriter(f, fieldnames=[k for k in rows[0].keys() if k != 'Account ID'])
         writer.writeheader()
         for row in rows:
             row = dict(row)
             row.pop('Account ID', None)
             writer.writerow(row)
-    return jsonify({'filename': filename})
+    return jsonify({'filename': filename, 'account_id': account_id})
 
 # Endpoint to list CSV files
 @app.route('/list_csvs')

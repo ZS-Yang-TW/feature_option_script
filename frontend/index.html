@@ -165,11 +165,34 @@
       font-size: 1.1em;
     }
 
+    #accountInfo {
+      margin-top: 0.5em;
+      font-weight: normal;
+      color: #5a6c7d;
+      font-size: 0.95em;
+    }
+
     #compareResult h3 {
       margin-top: 2em;
       color: #357ab8;
       font-size: 1.15em;
       font-weight: 700;
+    }
+
+    input[type="text"] {
+      padding: 0.4em 0.6em;
+      border-radius: 6px;
+      border: 1px solid #cfd8dc;
+      background: #fff;
+      margin-right: 1em;
+      margin-left: 0.5em;
+      transition: border 0.2s;
+      font-size: 1em;
+    }
+
+    input[type="text"]:focus {
+      border: 1.5px solid #4a90e2;
+      outline: none;
     }
 
     @media (max-width: 800px) {
@@ -225,19 +248,23 @@
   <div class="container">
     <h2>Feature Option List</h2>
     <div>
+      <label for="accountIdInput">Account ID：</label>
+      <input type="text" id="accountIdInput" placeholder="輸入 Account ID" value="1">
+      <button id="fetchBtn">取得新的 CSV</button>
+      <br>
       <label for="csvSelect">選擇 CSV 檔案：</label>
       <select id="csvSelect"></select>
-      <button id="fetchBtn">取得新的 CSV</button>
       <button id="toggleDescBtn">隱藏/顯示描述欄</button>
       <button id="compareBtn">進入比較模式</button>
     </div>
+    <div id="accountInfo"></div>
     <div id="totalCount"></div>
     <table id="featureTable"></table>
     <div id="comparePanel" style="display:none">
       <h3>比較兩個版本</h3>
-      <label for="csvVer1">版本 1：</label>
+      <label for="csvVer1">舊版本 (從)：</label>
       <select id="csvVer1"></select>
-      <label for="csvVer2">版本 2：</label>
+      <label for="csvVer2">新版本 (到)：</label>
       <select id="csvVer2"></select>
       <button id="doCompareBtn">開始比較</button>
       <button id="copyCompareBtn" style="display:none">複製比較結果</button>
@@ -354,19 +381,52 @@
     }
 
     let lastRows = [];
+    let currentAccountId = '';
+    
     async function loadCSV(filename) {
       const res = await fetch('/csv/' + filename);
       const text = await res.text();
       const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
-      lastRows = parsed.data;
+      
+      // 提取 Account ID
+      const commentLine = parsed.data.find(row => row[0] && row[0].startsWith('#'));
+      if (commentLine) {
+        const match = commentLine[0].match(/Account ID:\s*(\S+)/);
+        if (match) {
+          currentAccountId = match[1];
+          document.getElementById('accountInfo').textContent = `當前 Account ID: ${currentAccountId}`;
+        }
+      }
+      
+      // 過濾掉註釋行（以 # 開頭的行）
+      lastRows = parsed.data.filter(row => row[0] && !row[0].startsWith('#'));
       renderTable(lastRows);
     }
 
     document.getElementById('fetchBtn').onclick = async () => {
+      const accountId = document.getElementById('accountIdInput').value.trim();
+      if (!accountId) {
+        alert('請輸入 Account ID');
+        return;
+      }
       document.getElementById('fetchBtn').disabled = true;
-      await fetch('/fetch_features', { method: 'POST' });
-      await fetchCSVs();
-      document.getElementById('fetchBtn').disabled = false;
+      try {
+        const response = await fetch('/fetch_features', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account_id: accountId })
+        });
+        const result = await response.json();
+        if (response.ok) {
+          await fetchCSVs();
+        } else {
+          alert(`錯誤: ${result.error}`);
+        }
+      } catch (error) {
+        alert(`請求失敗: ${error.message}`);
+      } finally {
+        document.getElementById('fetchBtn').disabled = false;
+      }
     };
 
     document.getElementById('toggleDescBtn').onclick = () => {
@@ -410,11 +470,30 @@
       ]);
       const rows1 = Papa.parse(csv1.trim(), { skipEmptyLines: true }).data;
       const rows2 = Papa.parse(csv2.trim(), { skipEmptyLines: true }).data;
-      const idx1 = Object.fromEntries(rows1[0].map((h, i) => [h, i]));
-      const idx2 = Object.fromEntries(rows2[0].map((h, i) => [h, i]));
+
+      // 提取兩個版本的 Account ID
+      let accountId1 = 'Unknown';
+      let accountId2 = 'Unknown';
+      const commentLine1 = rows1.find(row => row[0] && row[0].startsWith('#'));
+      const commentLine2 = rows2.find(row => row[0] && row[0].startsWith('#'));
+      if (commentLine1) {
+        const match = commentLine1[0].match(/Account ID:\s*(\S+)/);
+        if (match) accountId1 = match[1];
+      }
+      if (commentLine2) {
+        const match = commentLine2[0].match(/Account ID:\s*(\S+)/);
+        if (match) accountId2 = match[1];
+      }
+
+      // 跳過註釋行（以 # 開頭的行）
+      const dataRows1 = rows1.filter(row => row[0] && !row[0].startsWith('#'));
+      const dataRows2 = rows2.filter(row => row[0] && !row[0].startsWith('#'));
+
+      const idx1 = Object.fromEntries(dataRows1[0].map((h, i) => [h, i]));
+      const idx2 = Object.fromEntries(dataRows2[0].map((h, i) => [h, i]));
       // 以 Feature Name 當 key
-      const map1 = new Map(rows1.slice(1).map(r => [r[idx1['Feature Name']], r]));
-      const map2 = new Map(rows2.slice(1).map(r => [r[idx2['Feature Name']], r]));
+      const map1 = new Map(dataRows1.slice(1).map(r => [r[idx1['Feature Name']], r]));
+      const map2 = new Map(dataRows2.slice(1).map(r => [r[idx2['Feature Name']], r]));
       // 新增
       const added = [];
       for (const [k, r] of map2) if (!map1.has(k)) added.push(r);
@@ -430,8 +509,9 @@
         let hasDiff = false;
         const diffRow = { name: r2[idx2['Feature Name']], desc: r2[idx2['Feature Description']] };
         for (const f of fields) {
-          const v1 = r1[idx1[f]];
-          const v2 = r2[idx2[f]];
+          const v1 = (r1[idx1[f]] || '').trim();
+          const v2 = (r2[idx2[f]] || '').trim();
+          
           // 轉換空白為 ❌
           const showV1 = v1 === '✅' ? '✅' : '❌';
           const showV2 = v2 === '✅' ? '✅' : '❌';
@@ -441,6 +521,15 @@
         if (hasDiff) changed.push(diffRow);
       }
       let html = '';
+      // 顯示 Account ID 對照資訊
+      html += `<div style="background: #f0f4f8; padding: 1em; border-radius: 6px; margin-bottom: 1em;">`;
+      html += `<strong>舊版本 Account ID:</strong> ${accountId1} &nbsp;&nbsp;&nbsp; `;
+      html += `<strong>新版本 Account ID:</strong> ${accountId2}`;
+      if (accountId1 !== accountId2) {
+        html += ` <span style="color: #e53e3e; font-weight: bold;">⚠️ 注意：兩個版本的 Account ID 不同</span>`;
+      }
+      html += `</div>`;
+      
       html += `<h3>新增的 Feature Option (${added.length})</h3>`;
       html += '<table><tr><th>Feature Name</th><th>Feature Description</th></tr>' +
         added.map(r => `<tr><td>${r[idx2['Feature Name']]}</td><td>${r[idx2['Feature Description']]}</td></tr>`).join('') + '</table>';

@@ -8,6 +8,10 @@ __pycache__/
 # CSV
 backend/csv/*.csv
 
+# Logs
+backend/server.log
+backend/*.log
+
 # VSCode
 .vscode/
 
