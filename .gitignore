@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
+
+# CSV
+backend/csv/*.csv
+
+# VSCode
+.vscode/
+
+# Mac
+.DS_Store

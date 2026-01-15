@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Feature Option List</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
+      margin: 0;
+      background: #f7f8fa;
+      color: #222;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #2d3a4a;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 2em auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px 0 #0001;
+      padding: 2em 2.5em 2.5em 2.5em;
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin-top: 1.5em;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px 0 #0001;
+    }
+
+    th,
+    td {
+      border: none;
+      padding: 0.7em 0.6em;
+      text-align: left;
+      max-width: 250px;
+      word-break: break-all;
+      white-space: pre-line;
+      font-size: 1em;
+    }
+
+    th {
+      background: #f0f4f8;
+      color: #2d3a4a;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e6ed;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    tr:hover td {
+      background: #e6f0fa;
+      transition: background 0.2s;
+    }
+
+    th[data-col="Feature Name"],
+    td:nth-child(1) {
+      min-width: 160px;
+      max-width: 320px;
+      width: 200px;
+      white-space: pre-line;
+      overflow: auto;
+      text-overflow: unset;
+      word-break: break-all;
+      text-align: left;
+    }
+
+    th[data-col="Feature Description"],
+    td[data-col="Feature Description"] {
+      min-width: 320px;
+      max-width: 600px;
+      width: 400px;
+      white-space: pre-line;
+      overflow: auto;
+      text-overflow: unset;
+      word-break: break-all;
+      text-align: left;
+    }
+
+    th[data-col="Hidden"],
+    td[data-col="Hidden"],
+    th[data-col="Shadow"],
+    td[data-col="Shadow"],
+    th[data-col="Feature Preview"],
+    td[data-col="Feature Preview"],
+    th[data-col="Enable"],
+    td[data-col="Enable"],
+    th[data-col="Lock"],
+    td[data-col="Lock"] {
+      width: 60px;
+      min-width: 48px;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    label,
+    select,
+    button {
+      font-size: 1em;
+    }
+
+    select {
+      padding: 0.3em 1.2em 0.3em 0.5em;
+      border-radius: 6px;
+      border: 1px solid #cfd8dc;
+      background: #f7f8fa;
+      margin-right: 1em;
+      margin-left: 0.5em;
+      transition: border 0.2s;
+    }
+
+    select:focus {
+      border: 1.5px solid #4a90e2;
+      outline: none;
+    }
+
+    button {
+      background: linear-gradient(90deg, #4a90e2 0%, #357ab8 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5em 1.3em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 4px 0 #0001;
+      margin-right: 1em;
+      margin-bottom: 0.5em;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover,
+    button:focus {
+      background: linear-gradient(90deg, #357ab8 0%, #4a90e2 100%);
+      box-shadow: 0 2px 8px 0 #4a90e233;
+    }
+
+    #comparePanel {
+      background: #f0f4f8;
+      border-radius: 8px;
+      padding: 1em 1.5em;
+      margin-bottom: 1.5em;
+      box-shadow: 0 1px 4px 0 #0001;
+    }
+
+    #totalCount {
+      margin-top: 1em;
+      font-weight: bold;
+      color: #357ab8;
+      font-size: 1.1em;
+    }
+
+    #compareResult h3 {
+      margin-top: 2em;
+      color: #357ab8;
+      font-size: 1.15em;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        padding: 1em;
+      }
+
+      th,
+      td {
+        font-size: 0.95em;
+      }
+
+      th[data-col="Feature Name"],
+      td:nth-child(1) {
+        min-width: 120px;
+        max-width: 200px;
+      }
+
+      th[data-col="Hidden"],
+      td[data-col="Hidden"],
+      th[data-col="Shadow"],
+      td[data-col="Shadow"],
+      th[data-col="Feature Preview"],
+      td[data-col="Feature Preview"],
+      th[data-col="Enable"],
+      td[data-col="Enable"],
+      th[data-col="Lock"],
+      td[data-col="Lock"] {
+        min-width: 80px;
+        max-width: 80px;
+      }
+    }
+
+    /* 欄寬拖曳調整器樣式 */
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 2;
+    }
+
+    th {
+      position: relative;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Feature Option List</h2>
+    <div>
+      <label for="csvSelect">選擇 CSV 檔案：</label>
+      <select id="csvSelect"></select>
+      <button id="fetchBtn">取得新的 CSV</button>
+      <button id="toggleDescBtn">隱藏/顯示描述欄</button>
+      <button id="compareBtn">進入比較模式</button>
+    </div>
+    <div id="totalCount"></div>
+    <table id="featureTable"></table>
+    <div id="comparePanel" style="display:none">
+      <h3>比較兩個版本</h3>
+      <label for="csvVer1">版本 1：</label>
+      <select id="csvVer1"></select>
+      <label for="csvVer2">版本 2：</label>
+      <select id="csvVer2"></select>
+      <button id="doCompareBtn">開始比較</button>
+      <button id="copyCompareBtn" style="display:none">複製比較結果</button>
+    </div>
+    <div id="compareResult"></div>
+    <button id="copyTableBtn" style="display:none">複製表格</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    let descVisible = true;
+    let inCompareMode = false;
+
+    // 欄寬拖曳 resizer（可對任意 table）
+    function addResizersToTable(table) {
+      if (!table || !table.rows.length) return;
+      const ths = table.querySelectorAll('th');
+      ths.forEach((th, idx) => {
+        th.style.position = 'relative';
+        let resizer = th.querySelector('.resizer');
+        if (!resizer) {
+          resizer = document.createElement('div');
+          resizer.className = 'resizer';
+          th.appendChild(resizer);
+        }
+        resizer.style.position = 'absolute';
+        resizer.style.right = '0';
+        resizer.style.top = '0';
+        resizer.style.width = '6px';
+        resizer.style.height = '100%';
+        resizer.style.cursor = 'col-resize';
+        resizer.style.userSelect = 'none';
+        resizer.style.zIndex = '10';
+        resizer.onmousedown = function (e) {
+          e.preventDefault();
+          document.body.style.cursor = 'col-resize';
+          const startX = e.pageX;
+          const startWidth = th.offsetWidth;
+          function onMove(ev) {
+            const newWidth = Math.max(32, startWidth + (ev.pageX - startX));
+            th.style.width = newWidth + 'px';
+            // 同步所有同欄 td
+            const colIdx = idx + 1;
+            table.querySelectorAll('tr td:nth-child(' + colIdx + ')').forEach(td => {
+              td.style.width = newWidth + 'px';
+            });
+          }
+          function onUp() {
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        };
+      });
+    }
+    // 主表格專用
+    function addResizers() {
+      addResizersToTable(document.getElementById('featureTable'));
+    }
+
+    function renderTable(rows) {
+      if (inCompareMode) return; // 比較模式下不顯示主表格
+      const table = document.getElementById('featureTable');
+      table.innerHTML = '';
+      if (!rows.length) {
+        document.getElementById('totalCount').textContent = '';
+        return;
+      }
+      const thead = document.createElement('tr');
+      const stateFields = ['Hidden', 'Shadow', 'Feature Preview', 'Enable', 'Lock'];
+      rows[0].forEach((h, idx) => {
+        if (!descVisible && h === 'Feature Description') return;
+        const th = document.createElement('th');
+        if (stateFields.includes(h)) {
+          th.innerHTML = h.split(' ').join('<br>');
+        } else {
+          th.textContent = h;
+        }
+        th.dataset.col = h;
+        thead.appendChild(th);
+      });
+      table.appendChild(thead);
+      let count = 0;
+      for (let i = 1; i < rows.length; ++i) {
+        const tr = document.createElement('tr');
+        rows[i].forEach((cell, idx) => {
+          if (!descVisible && rows[0][idx] === 'Feature Description') return;
+          const td = document.createElement('td');
+          td.textContent = cell;
+          td.dataset.col = rows[0][idx];
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+        count++;
+      }
+      document.getElementById('totalCount').textContent = `總數量：${count}`;
+      showCopyBtn();
+      addResizers(); // 新增：渲染完表格後加上 resizer
+    }
+
+    async function fetchCSVs() {
+      const res = await fetch('/list_csvs');
+      const files = await res.json();
+      const sel = document.getElementById('csvSelect');
+      sel.innerHTML = '';
+      files.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        sel.appendChild(opt);
+      });
+      if (files.length) loadCSV(files[0]);
+    }
+
+    let lastRows = [];
+    async function loadCSV(filename) {
+      const res = await fetch('/csv/' + filename);
+      const text = await res.text();
+      const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
+      lastRows = parsed.data;
+      renderTable(lastRows);
+    }
+
+    document.getElementById('fetchBtn').onclick = async () => {
+      document.getElementById('fetchBtn').disabled = true;
+      await fetch('/fetch_features', { method: 'POST' });
+      await fetchCSVs();
+      document.getElementById('fetchBtn').disabled = false;
+    };
+
+    document.getElementById('toggleDescBtn').onclick = () => {
+      descVisible = !descVisible;
+      if (lastRows.length) renderTable(lastRows);
+    };
+
+    document.getElementById('compareBtn').onclick = () => {
+      inCompareMode = true;
+      document.getElementById('featureTable').innerHTML = '';
+      document.getElementById('totalCount').textContent = '';
+      document.getElementById('comparePanel').style.display = 'block';
+      document.getElementById('compareResult').innerHTML = '';
+      // 填入所有 csv
+      fetch('/list_csvs').then(r => r.json()).then(files => {
+        const v1 = document.getElementById('csvVer1');
+        const v2 = document.getElementById('csvVer2');
+        v1.innerHTML = v2.innerHTML = '';
+        files.forEach(f => {
+          const o1 = document.createElement('option');
+          o1.value = o1.textContent = f;
+          v1.appendChild(o1);
+          const o2 = document.createElement('option');
+          o2.value = o2.textContent = f;
+          v2.appendChild(o2);
+        });
+        if (files.length > 1) v2.selectedIndex = 1;
+      });
+    };
+
+    document.getElementById('doCompareBtn').onclick = async () => {
+      const v1 = document.getElementById('csvVer1').value;
+      const v2 = document.getElementById('csvVer2').value;
+      if (!v1 || !v2 || v1 === v2) {
+        document.getElementById('compareResult').innerHTML = '<div style="color:red">請選擇兩個不同版本</div>';
+        return;
+      }
+      const [csv1, csv2] = await Promise.all([
+        fetch('/csv/' + v1).then(r => r.text()),
+        fetch('/csv/' + v2).then(r => r.text())
+      ]);
+      const rows1 = Papa.parse(csv1.trim(), { skipEmptyLines: true }).data;
+      const rows2 = Papa.parse(csv2.trim(), { skipEmptyLines: true }).data;
+      const idx1 = Object.fromEntries(rows1[0].map((h, i) => [h, i]));
+      const idx2 = Object.fromEntries(rows2[0].map((h, i) => [h, i]));
+      // 以 Feature Name 當 key
+      const map1 = new Map(rows1.slice(1).map(r => [r[idx1['Feature Name']], r]));
+      const map2 = new Map(rows2.slice(1).map(r => [r[idx2['Feature Name']], r]));
+      // 新增
+      const added = [];
+      for (const [k, r] of map2) if (!map1.has(k)) added.push(r);
+      // 刪除
+      const removed = [];
+      for (const [k, r] of map1) if (!map2.has(k)) removed.push(r);
+      // 狀態變動
+      const changed = [];
+      const fields = ['Hidden', 'Shadow', 'Feature Preview', 'Enable', 'Lock'];
+      for (const [k, r2] of map2) {
+        if (!map1.has(k)) continue;
+        const r1 = map1.get(k);
+        let hasDiff = false;
+        const diffRow = { name: r2[idx2['Feature Name']], desc: r2[idx2['Feature Description']] };
+        for (const f of fields) {
+          const v1 = r1[idx1[f]];
+          const v2 = r2[idx2[f]];
+          // 轉換空白為 ❌
+          const showV1 = v1 === '✅' ? '✅' : '❌';
+          const showV2 = v2 === '✅' ? '✅' : '❌';
+          diffRow[f] = v1 !== v2 ? `${showV1} → ${showV2}` : '';
+          if (v1 !== v2) hasDiff = true;
+        }
+        if (hasDiff) changed.push(diffRow);
+      }
+      let html = '';
+      html += `<h3>新增的 Feature Option (${added.length})</h3>`;
+      html += '<table><tr><th>Feature Name</th><th>Feature Description</th></tr>' +
+        added.map(r => `<tr><td>${r[idx2['Feature Name']]}</td><td>${r[idx2['Feature Description']]}</td></tr>`).join('') + '</table>';
+      html += `<h3>被刪除的 Feature Option (${removed.length})</h3>`;
+      html += '<table><tr><th>Feature Name</th><th>Feature Description</th></tr>' +
+        removed.map(r => `<tr><td>${r[idx1['Feature Name']]}</td><td>${r[idx1['Feature Description']]}</td></tr>`).join('') + '</table>';
+      html += `<h3>Feature Option 狀態變動 (${changed.length})</h3>`;
+      // 狀態變動表格標題換行
+      html += '<table><tr><th>Feature Name</th><th>Feature Description</th>' +
+        fields.map(f => `<th>${f.split(' ').join('<br>')}</th>`).join('') + '</tr>' +
+        changed.map(c => `<tr><td>${c.name}</td><td>${c.desc}</td>` + fields.map(f => `<td>${c[f] || ''}</td>`).join('') + '</tr>').join('') + '</table>';
+      document.getElementById('compareResult').innerHTML = html;
+      // 新增：讓比較結果的每個表格都能拖曳欄寬
+      setTimeout(() => {
+        document.querySelectorAll('#compareResult table').forEach(tbl => {
+          addResizersToTable(tbl);
+        });
+      }, 0);
+      showCopyCompareBtn();
+    };
+
+    document.getElementById('copyTableBtn').onclick = () => {
+      const table = document.getElementById('featureTable');
+      if (!table.rows.length) return;
+      const md = tableToMarkdown(table);
+      navigator.clipboard.writeText(md);
+    };
+
+    document.getElementById('copyCompareBtn').onclick = () => {
+      const compareDiv = document.getElementById('compareResult');
+      let md = '';
+      compareDiv.querySelectorAll('h3,table').forEach(el => {
+        if (el.tagName === 'H3') md += `\n**${el.textContent}**\n`;
+        else md += tableToMarkdown(el) + '\n';
+      });
+      navigator.clipboard.writeText(md);
+    };
+    // 重新選主表格時退出比較模式
+    document.getElementById('csvSelect').onchange = e => {
+      inCompareMode = false;
+      document.getElementById('comparePanel').style.display = 'none';
+      document.getElementById('compareResult').innerHTML = '';
+      document.getElementById('copyCompareBtn').style.display = 'none';
+      loadCSV(e.target.value);
+    };
+
+    function tableToMarkdown(table) {
+      let md = '';
+      const rows = Array.from(table.querySelectorAll('tr'));
+      if (!rows.length) return '';
+      const ths = Array.from(rows[0].querySelectorAll('th,td')).map(td =>
+        td.textContent.trim().replace(/\n/g, ' ').replace(/\|/g, '\\|')
+      );
+      md += '| ' + ths.join(' | ') + ' |\n';
+      md += '| ' + ths.map(() => '---').join(' | ') + ' |\n';
+      for (let i = 1; i < rows.length; ++i) {
+        const tds = Array.from(rows[i].querySelectorAll('td')).map(td =>
+          td.textContent.trim().replace(/\n/g, ' ').replace(/\|/g, '\\|')
+        );
+        md += '| ' + tds.join(' | ') + ' |\n';
+      }
+      return md;
+    }
+
+    function showCopyBtn() {
+      const table = document.getElementById('featureTable');
+      document.getElementById('copyTableBtn').style.display = table.rows.length ? '' : 'none';
+    }
+
+    function showCopyCompareBtn() {
+      const compareDiv = document.getElementById('compareResult');
+      document.getElementById('copyCompareBtn').style.display = compareDiv.querySelector('table') ? '' : 'none';
+    }
+    fetchCSVs();
+  </script>
+</body>
+
+</html>
